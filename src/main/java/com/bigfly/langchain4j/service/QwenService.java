@@ -12,18 +12,25 @@ import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.output.Response;
+import dev.langchain4j.service.TokenStream;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.*;
 
 @Service
+@Slf4j
 public class  QwenService {
     private static final Logger logger = LoggerFactory.getLogger(QwenService.class);
 
@@ -45,6 +52,12 @@ public class  QwenService {
 
     // 对话存储
     private ChatMemory chatMemory = null;
+
+    @Autowired
+    private StreamingChatModel streamingChatModel;
+
+    @Autowired
+    private StreamingAssistant streamingAssistant;
 
 
     /**
@@ -316,6 +329,134 @@ public class  QwenService {
         logger.info("响应：" + answer);
         return answer + "[from highLevelDbByUserID]";
 
+    }
+
+    /**
+     * SSE流式聊天方法（用于网页实时显示）
+     *
+     * @param prompt 提示词
+     * @return SseEmitter实例，用于向客户端发送流式响应
+     */
+    public SseEmitter lowLevelStreamingChat(String prompt) {
+        // 创建SseEmitter，设置超时时间为30分钟
+        SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
+
+        // 使用 CompletableFuture 在异步线程中执行
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                logger.info("开始流式聊天: {}", prompt);
+                
+                // 使用streamingChatModel进行流式聊天
+                streamingChatModel.chat(prompt, new StreamingChatResponseHandler() {
+                    @Override
+                    public void onPartialResponse(String partialResponse) {
+                        if (partialResponse == null || partialResponse.trim().isEmpty()) {
+                            return;
+                        }
+
+                        try {
+                            // 发送部分响应到客户端
+                            emitter.send(SseEmitter.event().data(partialResponse));
+                            logger.info("发送token: [{}]", partialResponse);
+                            
+                            // 添加小延迟，让前端有时间渲染
+                            Thread.sleep(50);
+                        } catch (Exception e) {
+                            logger.error("发送失败: {}", e.getMessage());
+                            emitter.completeWithError(e);
+                        }
+                    }
+
+                    @Override
+                    public void onCompleteResponse(ChatResponse completeResponse) {
+                        try {
+                            logger.info("流式聊天完成");
+                            emitter.send(SseEmitter.event().name("complete").data("[DONE]"));
+                            emitter.complete();
+                        } catch (Exception e) {
+                            emitter.completeWithError(e);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        logger.error("流式错误: {}", throwable.getMessage());
+                        emitter.completeWithError(throwable);
+                    }
+                });
+            } catch (Exception e) {
+                logger.error("异常: {}", e.getMessage(), e);
+                emitter.completeWithError(e);
+            }
+        });
+
+        emitter.onCompletion(() -> logger.info("SSE连接完成"));
+        emitter.onTimeout(() -> emitter.completeWithError(new RuntimeException("超时")));
+
+        return emitter;
+    }
+    /**
+     * 基于高级API的SSE流式聊天方法
+     *
+     * @param prompt 提示词
+     * @return SseEmitter实例，用于向客户端发送流式响应
+     */
+    public SseEmitter highLevelStreamingChat(String prompt) {
+        // 创建SseEmitter，设置超时时间为30分钟
+        SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
+
+        try {
+            logger.info("开始高级API流式聊天: {}", prompt);
+            
+            // 使用高级API的TokenStream
+            TokenStream tokenStream = streamingAssistant.chat(prompt);
+
+            // 注册回调函数
+            tokenStream.onPartialResponse(token -> {
+                if (token == null || token.trim().isEmpty()) {
+                    return;
+                }
+
+                try {
+                    // 发送token到客户端
+                    emitter.send(SseEmitter.event().data(token));
+                    logger.info("发送token: [{}]", token);
+                    
+                    // 添加小延迟，让前端有时间渲染
+                    Thread.sleep(50);
+                } catch (Exception e) {
+                    logger.error("发送token失败: {}", e.getMessage());
+                    emitter.completeWithError(e);
+                }
+            });
+
+            tokenStream.onError(throwable -> {
+                logger.error("高级API流式错误: {}", throwable.getMessage());
+                emitter.completeWithError(throwable);
+            });
+
+            tokenStream.onCompleteResponse(completeResponse -> {
+                try {
+                    logger.info("高级API流式聊天完成");
+                    emitter.send(SseEmitter.event().name("complete").data("[DONE]"));
+                    emitter.complete();
+                } catch (Exception e) {
+                    logger.error("发送完成响应失败: {}", e.getMessage());
+                    emitter.completeWithError(e);
+                }
+            });
+
+            // 启动流处理
+            tokenStream.start();
+        } catch (Exception e) {
+            logger.error("创建高级API流式响应失败: {}", e.getMessage(), e);
+            emitter.completeWithError(e);
+        }
+
+        emitter.onCompletion(() -> logger.info("高级API SSE连接完成"));
+        emitter.onTimeout(() -> emitter.completeWithError(new RuntimeException("超时")));
+
+        return emitter;
     }
 
 }

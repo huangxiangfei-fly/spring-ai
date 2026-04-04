@@ -1,5 +1,8 @@
 server:
   port: 8080
+  tomcat:
+    # 禁用响应缓冲，确保 SSE 流式输出
+    max-swallow-size: -1
 
 spring:
   application:
@@ -42,7 +45,7 @@ langchain4j:
 # 日志级别
 logging:
   level:
-    dev.langchain4j: debug #日志级别
+    dev.langchain4j: INFO #日志级别
     com.alibaba.cloud.ai: DEBUG
     org.springframework.ai: DEBUG
     org:

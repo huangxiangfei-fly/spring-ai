@@ -1,13 +1,17 @@
 package com.bigfly.langchain4j.config;
 
+import com.bigfly.langchain4j.service.StreamingAssistant;
 import com.bigfly.langchain4j.util.ImageEditModelParam;
 import com.bigfly.langchain4j.service.Assistant;
 import com.bigfly.langchain4j.util.Tools;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.community.model.dashscope.WanxImageSize;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,6 +74,38 @@ public class LangChain4jConfig {
                 .baseUrl(baseUrl)
                 .build();
     }
+
+    /**
+     * 创建并配置StreamingChatModel实例（使用通义千问的OpenAI兼容接口）
+     *
+     * @return StreamingChatModel实例
+     */
+    @Bean
+    public StreamingChatModel streamingChatModel() {
+        return OpenAiStreamingChatModel.builder()
+                .apiKey(apiKey)
+                .modelName(modelName)
+                .baseUrl(baseUrl)
+                .build();
+    }
+
+    /**
+     * 创建并配置StreamingAssistant实例  --流响应
+     *
+     * @param streamingChatModel StreamingChatModel实例
+     * @return StreamingAssistant实例
+     */
+    @Bean
+    public StreamingAssistant streamingAssistant(@Qualifier("streamingChatModel")StreamingChatModel streamingChatModel) {
+        // 创建一个ChatMemory实例，通过消息数量限制记忆长度，记录在数据库中 -- 高级
+       ChatMemory chatMemory = Tools.createDbChatMemoryInstance("chat-memory-global.db", false);
+
+        return AiServices.builder(StreamingAssistant.class)
+                .streamingChatModel(streamingChatModel)
+                .chatMemory(chatMemory)
+                .build();
+    }
+
 
     @Bean
     public Assistant assistantRamGlobal(@Qualifier("openAiChatModel") OpenAiChatModel chatModel) {

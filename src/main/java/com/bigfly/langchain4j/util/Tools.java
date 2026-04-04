@@ -9,10 +9,13 @@ import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.mapdb.Serializer.*;
 
 public class Tools {
+    // 用于缓存已创建的ChatMemoryStore实例，避免重复打开同一数据库文件导致文件锁冲突
+    private static final Map<String, ChatMemoryStore> storeCache = new ConcurrentHashMap<>();
     /**
      * 创建一个ChatMemory实例，用于存储聊天记忆，存在内存中
      *
@@ -31,6 +34,14 @@ public class Tools {
      * @return ChatMemoryStore实例
      */
     public static ChatMemoryStore createStoreInstance(String dbName, boolean isById) {
+        // 生成缓存key，确保相同参数的请求返回同一个实例
+        String cacheKey = dbName + "_" + isById;
+        
+        // 如果实例已存在，直接返回，避免重复打开数据库文件导致文件锁冲突
+        if (storeCache.containsKey(cacheKey)) {
+            return storeCache.get(cacheKey);
+        }
+        
         ChatMemoryStore rlt = null;
         // 创建一个MapDB实例，用于存储聊天记忆
         DB db = DBMaker.fileDB(dbName).transactionEnable().make();
@@ -43,6 +54,8 @@ public class Tools {
             rlt = new EmbeddedGlobalDb(db, dbMap);
         }
 
+        // 将新创建的实例存入缓存
+        storeCache.put(cacheKey, rlt);
         return rlt;
     }
 
