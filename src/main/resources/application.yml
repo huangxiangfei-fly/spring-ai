@@ -58,3 +58,9 @@ logging:
                   SimpleLoggerAdvisor: DEBUG
 
 
+
+weather:
+  tools:
+    url: https://cn.apihz.cn/api/tianqi/tqyb.php?id=%s&key=%s&sheng=%s&place=%s
+    id:  10014930
+    key: 7ee41f7ef245c9111f5869ac8d0c8b96

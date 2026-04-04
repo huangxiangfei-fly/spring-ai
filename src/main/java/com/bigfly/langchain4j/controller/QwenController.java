@@ -460,4 +460,19 @@ public class QwenController {
         return chat(request, true);
     }
 
+    @PostMapping("/tool/low/getwether")
+    public ResponseEntity<Response> getWeather(@RequestBody PromptRequest request) {
+        ResponseEntity<Response> checkRlt = check(request);
+        if (checkRlt != null) {
+            return checkRlt;
+        }
+        try {
+            Object response = qwenService.getWeather(request.getPrompt());
+            return ResponseEntity.ok(new Response(response.toString()));
+        } catch (Exception e) {
+            // 捕获异常并返回错误信息
+            return ResponseEntity.status(500).body(new Response("请求处理失败: " + e.getMessage()));
+        }
+    }
+
 }

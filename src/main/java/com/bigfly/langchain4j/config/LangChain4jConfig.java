@@ -2,6 +2,7 @@ package com.bigfly.langchain4j.config;
 
 import com.bigfly.langchain4j.service.*;
 import com.bigfly.langchain4j.tools.HistoryEventTool;
+import com.bigfly.langchain4j.tools.WeatherTools;
 import com.bigfly.langchain4j.util.ImageEditModelParam;
 import com.bigfly.langchain4j.util.Tools;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -73,6 +74,16 @@ public class LangChain4jConfig {
 
     @Value("${langchain4j.open-ai.chat-model.image-vl-model.base-url}")
     private String imageVLModelBaseUrl;
+
+
+    @Value("${weather.tools.url}")
+    private String weatherToolsUrl;
+
+    @Value("${weather.tools.id}")
+    private String weatherToolsId;
+
+    @Value("${weather.tools.key}")
+    private String weatherToolsKey;
 
     /**
      * 创建并配置OpenAiChatModel实例（使用通义千问的OpenAI兼容接口）
@@ -297,5 +308,20 @@ public class LangChain4jConfig {
     }
 
 
+
+
+    /**
+     * 创建天气工具类实例
+     *
+     * @return WeatherTools实例，Bean名称为weatherTools
+     */
+    @Bean
+    public WeatherTools weatherTools() {
+        WeatherTools tools = new WeatherTools();
+        tools.setWeatherToolsUrl(weatherToolsUrl);
+        tools.setWeatherToolsId(weatherToolsId);
+        tools.setWeatherToolsKey(weatherToolsKey);
+        return tools;
+    }
 
 }
