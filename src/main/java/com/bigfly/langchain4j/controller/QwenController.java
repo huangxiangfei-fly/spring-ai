@@ -385,6 +385,20 @@ public class QwenController {
         }
     }
 
+    @PostMapping("/output/byprompt")
+    public ResponseEntity<Response> byPrompt(@RequestBody PromptRequest request) {
+        ResponseEntity<Response> checkRlt = check(request);
+        if (checkRlt != null) {
+            return checkRlt;
+        }
 
+        try {
+            String response = qwenService.byPrompt(request.getUserId(),request.getPrompt());
+            return ResponseEntity.ok(new Response(response));
+        } catch (Exception e) {
+            // 捕获异常并返回错误信息
+            return ResponseEntity.status(500).body(new Response("请求处理失败: " + e.getMessage()));
+        }
+    }
 
 }

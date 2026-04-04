@@ -5,6 +5,7 @@ import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationP
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
 import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
+import com.bigfly.langchain4j.util.HistoryEvent;
 import com.bigfly.langchain4j.util.ImageEditModelParam;
 import com.bigfly.langchain4j.util.ImageUtils;
 import com.bigfly.langchain4j.util.Tools;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -458,5 +460,28 @@ public class  QwenService {
 
         return emitter;
     }
+
+    /**
+     * 通过提示词range大模型返回JSON格式的内容
+     *
+     * @param prompt
+     * @return
+     */
+    public String byPrompt(int userID,String prompt) {
+        String answer = assistant.byPrompt(userID,prompt);
+        logger.info("响应：" + answer);
+
+        HistoryEvent historyEvent = null;
+        // 用大模型返回的字符串直接反序列化成对象
+        try {
+            historyEvent = HistoryEvent.fromJson(answer);
+            logger.info("反序列化后的对象：" + historyEvent);
+        } catch (IOException e) {
+            logger.error("反序列化失败", e);
+        }
+
+        return answer + "[from byPrompt]";
+    }
+
 
 }
