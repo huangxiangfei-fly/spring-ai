@@ -9,13 +9,9 @@ import lombok.Data;
 
 @Data
 public class HistoryEvent {
-    @JsonProperty("main_characters")
+
     private List<String> mainCharacters;
-
-    @JsonProperty("year")
     private String year;
-
-    @JsonProperty("description")
     private String description;
 
     // 创建静态的ObjectMapper实例，避免重复创建

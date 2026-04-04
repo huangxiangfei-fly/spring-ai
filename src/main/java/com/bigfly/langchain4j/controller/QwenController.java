@@ -1,7 +1,9 @@
 package com.bigfly.langchain4j.controller;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.bigfly.langchain4j.service.QwenService;
+import com.bigfly.langchain4j.util.HistoryEvent;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -399,6 +401,63 @@ public class QwenController {
             // 捕获异常并返回错误信息
             return ResponseEntity.status(500).body(new Response("请求处理失败: " + e.getMessage()));
         }
+    }
+
+    @PostMapping("/output/byfunctioncall")
+    public ResponseEntity<Response> byfunctioncall(@RequestBody PromptRequest request) {
+        ResponseEntity<Response> checkRlt = check(request);
+        if (checkRlt != null) {
+            return checkRlt;
+        }
+
+        try {
+            String response = qwenService.byFunctionCall(request.getPrompt());
+            return ResponseEntity.ok(new Response(response));
+        } catch (Exception e) {
+            // 捕获异常并返回错误信息
+            return ResponseEntity.status(500).body(new Response("请求处理失败: " + e.getMessage()));
+        }
+    }
+
+
+    /**
+     * 封装一个通用方法，根据isModelFromSchema参数调用不同的服务方法
+     *
+     * @param request
+     * @param isModelFromSchema
+     * @return
+     */
+    private ResponseEntity<Response> chat(PromptRequest request, boolean isModelFromSchema) {
+        ResponseEntity<Response> checkRlt = check(request);
+        if (checkRlt != null) {
+            return checkRlt;
+        }
+
+        try {
+            HistoryEvent historyEvent = null;
+            if (isModelFromSchema) {
+                 historyEvent = qwenService.chatByModelFromSchema(request.getPrompt());
+            } else {
+                historyEvent = qwenService.chatByModelFromObject(request.getPrompt());
+            }
+
+            return ResponseEntity.ok(new Response(JSONObject.toJSONString(historyEvent)));
+        } catch (Exception e) {
+            HistoryEvent errRlt = new HistoryEvent();
+            errRlt.setDescription("请求处理失败: " + e.getMessage());
+            // 捕获异常并返回错误信息
+            return ResponseEntity.status(500).body(new Response(String.valueOf(errRlt)));
+        }
+    }
+
+    @PostMapping("/output/modelfromobject")
+    public ResponseEntity<Response> modelfromobject(@RequestBody PromptRequest request) {
+        return chat(request, false);
+    }
+
+    @PostMapping("/output/modelfromschema")
+    public ResponseEntity<Response> modelfromschema(@RequestBody PromptRequest request) {
+        return chat(request, true);
     }
 
 }

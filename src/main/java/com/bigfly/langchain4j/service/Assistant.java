@@ -1,5 +1,6 @@
 package com.bigfly.langchain4j.service;
 
+import com.bigfly.langchain4j.util.HistoryEvent;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
@@ -43,5 +44,7 @@ public interface Assistant {
      * @return 助手生成的回答
      */
     String byPrompt(@MemoryId int memoryId,@UserMessage String userMessage);
+
+
 
 }

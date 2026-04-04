@@ -1,15 +1,26 @@
 package com.bigfly.langchain4j.config;
 
-import com.bigfly.langchain4j.service.StreamingAssistant;
+import com.bigfly.langchain4j.service.*;
+import com.bigfly.langchain4j.tools.HistoryEventTool;
 import com.bigfly.langchain4j.util.ImageEditModelParam;
-import com.bigfly.langchain4j.service.Assistant;
 import com.bigfly.langchain4j.util.Tools;
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.community.model.dashscope.WanxImageSize;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
+import dev.langchain4j.model.chat.listener.ChatModelListener;
+import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
+import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
+import dev.langchain4j.model.chat.request.ResponseFormat;
+import dev.langchain4j.model.chat.request.ResponseFormatType;
+import dev.langchain4j.model.chat.request.json.*;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
@@ -18,6 +29,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import dev.langchain4j.service.AiServices;
+
+import java.util.List;
 
 
 /**
@@ -68,10 +81,44 @@ public class LangChain4jConfig {
      */
     @Bean
     public OpenAiChatModel openAiChatModel() {
+        ChatModelListener logger = new ChatModelListener() {
+            @Override
+            public void onRequest(ChatModelRequestContext reqCtx) {
+                // 1. 拿到 List<ChatMessage>
+                List<ChatMessage> messages = reqCtx.chatRequest().messages();
+                System.out.println("→ 请求: " + messages);
+            }
+
+            @Override
+            public void onResponse(ChatModelResponseContext respCtx) {
+                // 2. 先取 ChatModelResponse
+                ChatResponse response = respCtx.chatResponse();
+                // 3. 再取 AiMessage
+                AiMessage aiMessage = response.aiMessage();
+
+                // 4. 工具调用
+                List<ToolExecutionRequest> tools = aiMessage.toolExecutionRequests();
+                for (ToolExecutionRequest t : tools) {
+                    System.out.println("← tool      : " + t.name());
+                    System.out.println("← arguments : " + t.arguments()); // 原始 JSON
+                }
+
+                // 5. 纯文本
+                if (aiMessage.text() != null) {
+                    System.out.println("← text      : " + aiMessage.text());
+                }
+            }
+
+            @Override
+            public void onError(ChatModelErrorContext errorCtx) {
+                errorCtx.error().printStackTrace();
+            }
+        };
         return OpenAiChatModel.builder()
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .baseUrl(baseUrl)
+                .listeners(List.of(logger))
                 .build();
     }
 
@@ -148,7 +195,18 @@ public class LangChain4jConfig {
                 .build();
     }
 
+    @Bean
+    public AssistantFuncationcall assistantFuncationcall(@Qualifier("openAiChatModel")OpenAiChatModel chatModel, HistoryEventTool historyEventTool) {
+        // 创建一个ChatMemory实例，通过消息数量限制记忆长度，记录在数据库中 -- 高级
+        ChatMemory chatMemory = Tools.createDbChatMemoryInstance("chat-memory-global.db", false);
 
+        // 生成Assistant服务实例已经绑定了chatMemory
+        return AiServices.builder(AssistantFuncationcall.class)
+                .chatModel(chatModel)
+                .tools(historyEventTool)
+                .chatMemory(chatMemory)
+                .build();
+    }
     /**
      * 创建并配置用于图像生成的OpenAiChatModel实例
      *
@@ -190,5 +248,54 @@ public class LangChain4jConfig {
                 .baseUrl(imageVLModelBaseUrl)
                 .build();
     }
+
+    @Bean("modelWithJSONFormat")
+    public OpenAiChatModel modelFromObject() {
+        return OpenAiChatModel.builder()
+                .apiKey(apiKey)
+                .modelName(modelName)
+                .baseUrl(baseUrl)
+                .responseFormat(String.valueOf(ResponseFormat.JSON))
+                .build();
+    }
+
+    @Bean
+    public AssistantFormJson assistantWithModelFromObject(@Qualifier("modelWithJSONFormat") OpenAiChatModel modelWithJSONFormat) {
+        return AiServices.create(AssistantFormJson.class, modelWithJSONFormat);
+    }
+
+    @Bean("modelFromSchema")
+    public OpenAiChatModel modelFromSchema() {
+        JsonSchema jsonSchema = JsonSchema.builder()
+                .name("HistoryEvent") // OpenAI 要求顶层 schema 有名字
+                .rootElement(
+                        JsonObjectSchema.builder()
+                                .addProperty("mainCharacters", // 字符串数组
+                                        JsonArraySchema.builder()
+                                                .items(new JsonStringSchema())
+                                                .build())
+                                .addProperty("year", new JsonIntegerSchema())
+                                .addProperty("description", new JsonStringSchema())
+                                .required("mainCharacters", "year", "description")
+                                .build())
+                .build();
+
+        return OpenAiChatModel.builder()
+                .apiKey(apiKey)
+                .modelName(modelName)
+                .baseUrl(baseUrl)
+                .responseFormat(String.valueOf(ResponseFormat.builder()
+                        .type(ResponseFormatType.JSON)
+                        .jsonSchema(jsonSchema)
+                        .build()))
+                .build();
+    }
+
+    @Bean
+    public AssistantSchemaJson assistantWithModelFromSchema(@Qualifier("modelFromSchema") OpenAiChatModel modelFromSchema) {
+        return AiServices.create(AssistantSchemaJson.class, modelFromSchema);
+    }
+
+
 
 }

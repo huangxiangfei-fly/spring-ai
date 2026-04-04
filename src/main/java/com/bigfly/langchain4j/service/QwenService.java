@@ -61,6 +61,15 @@ public class  QwenService {
     @Autowired
     private StreamingAssistant streamingAssistant;
 
+    @Autowired
+    private AssistantFuncationcall assistantFuncationcall;
+
+    @Autowired
+    private AssistantFormJson assistantFormJson;
+
+    @Autowired
+    private AssistantSchemaJson assistantWithModelFromSchema;
+
 
     /**
      * 构造函数，通过依赖注入获取OpenAiChatModel实例
@@ -483,5 +492,41 @@ public class  QwenService {
         return answer + "[from byPrompt]";
     }
 
+    /**
+     * 通过提示词range大模型返回JSON格式的内容
+     *
+     * @param prompt
+     * @return
+     */
+    public String byFunctionCall(String prompt) {
+        HistoryEvent event = assistantFuncationcall.byFunctionCall(prompt);
+        logger.info("响应：" + event);
+        return event.toString() + "[from byFunctionCall]";
+    }
+
+
+    /**
+     * 调用通义千问模型进行对话
+     *
+     * @param message 用户消息
+     * @return AI回复
+     */
+    public HistoryEvent chatByModelFromObject(String message) {
+        HistoryEvent rlt = assistantFormJson.simpleChat(message);
+        logger.info("1. 收到响应对象: {}", rlt);
+        return rlt;
+    }
+
+    /**
+     * 调用通义千问模型进行对话
+     *
+     * @param message 用户消息
+     * @return AI回复
+     */
+    public HistoryEvent chatByModelFromSchema(String message) {
+        HistoryEvent rlt = assistantWithModelFromSchema.simpleChat(message);
+        logger.info("2. 收到响应对象: {}", rlt);
+        return rlt;
+    }
 
 }

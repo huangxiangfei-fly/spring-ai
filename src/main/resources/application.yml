@@ -45,7 +45,8 @@ langchain4j:
 # 日志级别
 logging:
   level:
-    dev.langchain4j: INFO #日志级别
+    root: INFO
+    dev.langchain4j: DEBUG #日志级别
     com.alibaba.cloud.ai: DEBUG
     org.springframework.ai: DEBUG
     org:
