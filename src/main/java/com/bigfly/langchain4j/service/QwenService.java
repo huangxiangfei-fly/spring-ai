@@ -76,6 +76,9 @@ public class  QwenService {
     private AssistantSchemaJson assistantWithModelFromSchema;
     @Autowired
     private WeatherTools weatherTools;
+    @Autowired
+    private AssistantTool assistantTool;
+
 
 
     /**
@@ -644,5 +647,9 @@ public class  QwenService {
         return resp.aiMessage().text() + "[from low level getWeather]";
     }
 
+
+    public String getWeatherNew(String prompt) {
+        return assistantTool.getWeather(prompt)+ "[from high level getWeather]";
+    }
 
 }

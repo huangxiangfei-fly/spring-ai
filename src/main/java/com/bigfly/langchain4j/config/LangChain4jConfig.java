@@ -307,6 +307,19 @@ public class LangChain4jConfig {
         return AiServices.create(AssistantSchemaJson.class, modelFromSchema);
     }
 
+    @Bean
+    public AssistantTool assistantTool(@Qualifier("openAiChatModel")OpenAiChatModel chatModel,WeatherTools weatherTools) {
+        // 创建一个ChatMemory实例，通过消息数量限制记忆长度，记录在数据库中 -- 高级
+        ChatMemory chatMemory = Tools.createDbChatMemoryInstance("chat-memory-global.db", false);
+
+        // 生成Assistant服务实例已经绑定了chatMemory
+        return AiServices.builder(AssistantTool.class)
+                .chatModel(chatModel)
+                .chatMemory(chatMemory)
+                .tools(weatherTools)
+                .build();
+    }
+
 
 
 
