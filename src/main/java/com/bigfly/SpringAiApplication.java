@@ -1,4 +1,4 @@
-package com.bigfly.langchain4j;
+package com.bigfly;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
