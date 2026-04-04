@@ -1,2 +1,5 @@
-# spring-ai
-基于java的spring-ai学习：langchain4j、alibabaAI
+代码地址： https://github.com/huangxiangfei-fly/spring-ai.git
+
+
+
+langchain4j参考来源：https://xinchen.blog.csdn.net/article/details/155524008
