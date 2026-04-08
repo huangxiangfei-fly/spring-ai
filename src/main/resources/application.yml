@@ -9,13 +9,19 @@ spring:
     name: spring-ai-langchain4j
   main:
     allow-bean-definition-overriding: true
+  # 解决SSE流式响应中文乱码
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
   ai:
     dashscope:
       # 你的阿里云 DashScope API Key，这里配置环境变量
       api-key: ${AI_DASHSCOPE_API_KEY:sk-c287a4b8bebb48afa3bbf2249af848e4}
       chat:
         options:
-          model: glm-5
+          model: qwen-plus
     ollama:
       base-url: http://localhost:11434
       chat:

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlibabaAi流式聊天演示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .input-area {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .response-area {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            min-height: 200px;
+            background-color: #f9f9f9;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+        .status {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>流式聊天演示</h1>
+    <div class="input-area">
+        <textarea id="promptInput" placeholder="请输入您的问题..."></textarea>
+        <button id="highLevelSendBtn" onclick="sendHighLevelMessage()">流式API发送</button>
+    </div>
+    <div class="status">
+        <span id="statusText">就绪</span>
+        <span id="loading" class="loading" style="display: none;"></span>
+    </div>
+    <div class="response-area" id="responseArea"></div>
+</div>
+
+<script>
+    let eventSource = null;
+    let abortController = null;
+    let isCompleted = false;
+
+    function disableAllButtons() {
+        document.getElementById('highLevelSendBtn').disabled = true;
+        document.getElementById('promptInput').disabled = true;
+    }
+
+    function enableAllButtons() {
+        document.getElementById('highLevelSendBtn').disabled = false;
+        document.getElementById('promptInput').disabled = false;
+    }
+
+    function resetUI(statusText) {
+        isCompleted = false;
+        disableAllButtons();
+        document.getElementById('statusText').textContent = statusText;
+        document.getElementById('loading').style.display = 'inline-block';
+        document.getElementById('responseArea').textContent = '';
+    }
+
+    function finishUI() {
+        isCompleted = true;
+        document.getElementById('statusText').textContent = '会话结束';
+        document.getElementById('loading').style.display = 'none';
+        enableAllButtons();
+    }
+
+    // 使用 EventSource 接收 SSE（低级API，保持不变）
+    function sendMessage() {
+        const prompt = document.getElementById('promptInput').value.trim();
+        if (!prompt) { alert('请输入问题！'); return; }
+
+        if (eventSource && eventSource.readyState !== EventSource.CLOSED) {
+            eventSource.close();
+        }
+        resetUI('正在发送低级API请求...');
+
+        eventSource = new EventSource(`/api/qwen/sse-streaming-chat?prompt=${encodeURIComponent(prompt)}&userId=1`);
+        eventSource.onopen = function() {
+            document.getElementById('statusText').textContent = '正在接收流式响应...';
+        };
+        eventSource.onmessage = function(event) {
+            const data = event.data;
+            if (data && data !== '[DONE]') {
+                const area = document.getElementById('responseArea');
+                area.textContent += data;
+                area.scrollTop = area.scrollHeight;
+            }
+        };
+        eventSource.addEventListener('complete', function() {
+            finishUI();
+            eventSource.close();
+        });
+        eventSource.onerror = function() {
+            if (!isCompleted) finishUI();
+            if (eventSource.readyState !== EventSource.CLOSED) eventSource.close();
+        };
+    }
+
+    // 使用 fetch + ReadableStream 接收 Flux<String> 流式响应
+    async function sendHighLevelMessage() {
+        const prompt = document.getElementById('promptInput').value.trim();
+        if (!prompt) { alert('请输入问题！'); return; }
+
+        // 中断上一次请求
+        if (abortController) {
+            abortController.abort();
+        }
+        abortController = new AbortController();
+        resetUI('正在发送请求...');
+
+        try {
+            const response = await fetch(`/ali/qwen/chat/stream?message=${encodeURIComponent(prompt)}`, {
+                method: 'GET',
+                signal: abortController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            document.getElementById('statusText').textContent = '正在接收流式响应...';
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            const responseArea = document.getElementById('responseArea');
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                responseArea.textContent += chunk;
+                responseArea.scrollTop = responseArea.scrollHeight;
+            }
+
+            finishUI();
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('请求被取消');
+                return;
+            }
+            console.error('Fetch error:', error);
+            document.getElementById('statusText').textContent = '请求失败: ' + error.message;
+            finishUI();
+        }
+    }
+
+    // 监听窗口关闭事件
+    window.addEventListener('beforeunload', function() {
+        if (eventSource && eventSource.readyState !== EventSource.CLOSED) {
+            eventSource.close();
+        }
+        if (abortController) {
+            abortController.abort();
+        }
+    });
+</script>
+</body>
+</html>
