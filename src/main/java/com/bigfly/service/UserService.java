@@ -2,6 +2,8 @@ package com.bigfly.service;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bigfly.common.BigFlyException;
+import com.bigfly.common.ErrorCode;
 import com.bigfly.entity.Menu;
 import com.bigfly.entity.Role;
 import com.bigfly.entity.User;
@@ -36,17 +38,17 @@ public class UserService {
 
         // 验证用户是否存在
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BigFlyException(ErrorCode.USER_NOT_EXIST);
         }
 
         // 验证密码（实际应该使用加密比对）
         if (!password.equals(user.getPassword())) {
-            throw new RuntimeException("密码错误");
+            throw new BigFlyException(ErrorCode.USER_PASSWORD_ERROR);
         }
 
         // 验证用户状态
         if (user.getStatus() == 0) {
-            throw new RuntimeException("用户已被禁用");
+            throw new BigFlyException(ErrorCode.USER_DISABLED);
         }
 
         // 登录成功，将用户ID存入Sa-Token
