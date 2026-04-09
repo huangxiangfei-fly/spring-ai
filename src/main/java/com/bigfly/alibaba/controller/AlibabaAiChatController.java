@@ -2,7 +2,6 @@ package com.bigfly.alibaba.controller;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -16,7 +15,7 @@ public class AlibabaAiChatController {
 
     private final ChatClient chatClient;
 
-    public AlibabaAiChatController(@Qualifier("dashScopeChatModel") ChatModel chatModel) {
+    public AlibabaAiChatController(ChatModel chatModel) {
         this.chatClient = ChatClient.builder(chatModel).build();
     }
 
