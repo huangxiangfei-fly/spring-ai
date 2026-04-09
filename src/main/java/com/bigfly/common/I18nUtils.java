@@ -34,6 +34,11 @@ public class I18nUtils {
      * @param code 消息code
      * @param args 参数
      * @return 国际化消息
+     * # 中文请求
+     * curl -H "Accept-Language: zh-CN"
+     *
+     * # 英文请求
+     * curl -H "Accept-Language: en-US"
      */
     public static String getMessage(String code, Object... args) {
         Locale locale = LocaleContextHolder.getLocale();
