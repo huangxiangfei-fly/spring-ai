@@ -10,7 +10,7 @@
     </root>
 
     <!-- 为com.bolingcavalry包设置日志级别 -->
-    <logger name="com.bigfly.langchain4j" level="info" additivity="false">
+    <logger name="com.bigfly.ai.langchain4j" level="info" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 </configuration>
