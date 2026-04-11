@@ -1,5 +1,6 @@
 package com.bigfly.ai.alibaba.controller;
 
+import cn.dev33.satoken.annotation.SaIgnore;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.http.MediaType;
@@ -35,6 +36,7 @@ public class AlibabaAiChatController {
      * 流式对话接口（SSE）
      * GET /ali/qwen/chat/stream?message=你好
      */
+    @SaIgnore
     @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_PLAIN_VALUE)
     public Flux<String> streamChat(@RequestParam String message) {
         return chatClient.prompt()
