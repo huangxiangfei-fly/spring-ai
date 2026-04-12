@@ -11,7 +11,12 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class CalculatorTools {
+public class CalculatorTools extends BaseTools {
+
+    @Override
+    protected Object getToolInstance() {
+        return this;
+    }
 
     /**
      * 加法计算

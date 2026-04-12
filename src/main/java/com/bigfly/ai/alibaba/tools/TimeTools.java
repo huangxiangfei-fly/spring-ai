@@ -14,7 +14,12 @@ import java.time.format.DateTimeFormatter;
  */
 @Slf4j
 @Component
-public class TimeTools {
+public class TimeTools extends BaseTools {
+
+    @Override
+    protected Object getToolInstance() {
+        return this;
+    }
 
     /**
      * 获取当前日期

@@ -3,7 +3,10 @@ package com.bigfly.ai.alibaba.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 工具函数调用服务
@@ -14,9 +17,11 @@ import org.springframework.stereotype.Service;
 public class ToolCallService {
 
     private final ChatClient chatClient;
+    private final List<ToolCallbackProvider> toolCallbackProviders;
 
-    public ToolCallService(ChatModel chatModel) {
+    public ToolCallService(ChatModel chatModel, List<ToolCallbackProvider> toolCallbackProviders) {
         this.chatClient = ChatClient.builder(chatModel).build();
+        this.toolCallbackProviders = toolCallbackProviders;
     }
 
     /**
@@ -29,11 +34,11 @@ public class ToolCallService {
         log.info("收到工具调用请求: {}", message);
         
         try {
-            String response = chatClient.prompt()
+            var prompt = chatClient.prompt()
                     .user(message)
-                    .tools()  // 启用所有注册的 Tool
-                    .call()
-                    .content();
+                    .tools(toolCallbackProviders.toArray(new ToolCallbackProvider[0]));  // 传入所有 Tool
+            
+            String response = prompt.call().content();
             
             log.info("工具调用完成，返回结果");
             return response;
@@ -56,7 +61,7 @@ public class ToolCallService {
             StringBuilder result = new StringBuilder();
             chatClient.prompt()
                     .user(message)
-                    .tools()
+                    .tools(toolCallbackProviders.toArray(new ToolCallbackProvider[0]))
                     .stream()
                     .content()
                     .doOnNext(chunk -> result.append(chunk))
@@ -88,7 +93,7 @@ public class ToolCallService {
             if (toolNames != null && toolNames.length > 0) {
                 promptBuilder.tools(toolNames);
             } else {
-                promptBuilder.tools();  // 使用所有工具
+                promptBuilder.tools(toolCallbackProviders.toArray(new ToolCallbackProvider[0]));  // 使用所有工具
             }
             
             String response = promptBuilder.call().content();

@@ -16,7 +16,12 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 @Component
-public class WeatherAliTools {
+public class WeatherAliTools extends BaseTools {
+
+    @Override
+    protected Object getToolInstance() {
+        return this;
+    }
 
     @Value("${weather.tools.url}")
     private String weatherToolsUrl;
