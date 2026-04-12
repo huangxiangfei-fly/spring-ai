@@ -2,6 +2,7 @@ package com.bigfly.ai.alibaba.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import com.bigfly.ai.alibaba.service.ReActService;
+import com.bigfly.ai.alibaba.service.ReactAgentService;
 import com.bigfly.ai.alibaba.service.ToolCallService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,12 @@ public class ToolCallController {
 
     private final ToolCallService toolCallService;
     private final ReActService reActService;
+    private final ReactAgentService reactAgentService;
 
-    public ToolCallController(ToolCallService toolCallService, ReActService reActService) {
+    public ToolCallController(ToolCallService toolCallService, ReActService reActService, ReactAgentService reactAgentService) {
         this.toolCallService = toolCallService;
         this.reActService = reActService;
+        this.reactAgentService = reactAgentService;
     }
 
     /**
@@ -113,5 +116,9 @@ public class ToolCallController {
     @GetMapping("/react")
     public String react(@RequestParam String question) {
         return reActService.react(question);
+    }
+    @GetMapping("/reactAgent")
+    public String reactAgent(@RequestParam String question) {
+        return reactAgentService.react(question);
     }
 }
