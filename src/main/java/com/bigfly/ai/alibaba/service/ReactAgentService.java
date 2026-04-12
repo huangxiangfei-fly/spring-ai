@@ -6,6 +6,7 @@ import com.alibaba.cloud.ai.graph.agent.hook.hip.ToolConfig;
 import com.alibaba.cloud.ai.graph.agent.hook.summarization.SummarizationHook;
 import com.alibaba.cloud.ai.graph.checkpoint.savers.redis.RedisSaver;
 import com.bigfly.ai.alibaba.hook.SensitiveWordHook;
+import com.bigfly.ai.alibaba.hook.SensitiveWordHook.SensitiveWordBlockedException;
 import com.bigfly.ai.alibaba.tools.BaseTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -112,6 +113,11 @@ public class ReactAgentService {
             String answer = response.getText();
             log.info("ReactAgent 返回答案: {}", answer);
             return answer;
+        } catch (SensitiveWordBlockedException e) {
+            // 捕获敏感词拦截异常，直接返回拦截消息
+            String blockMessage = e.getBlockReason();
+            log.warn("ReactAgent 被敏感词 Hook 拦截: {}", blockMessage);
+            return blockMessage;
         } catch (Exception e) {
             log.error("ReactAgent 调用失败", e);
             return "处理请求时出错: " + e.getMessage();

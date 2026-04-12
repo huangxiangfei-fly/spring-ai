@@ -87,7 +87,8 @@ public class SensitiveWordHook extends AgentHook {
 
         if (!result.safe()) {
             log.warn("[SensitiveWordHook] AI 审核拦截: input={}, reason={}", userInput, result.reason());
-            return CompletableFuture.completedFuture(buildBlockResponse(result.reason()));
+            // 抛出异常来中断 Agent 执行
+            throw new SensitiveWordBlockedException(result.reason());
         }
 
         log.info("[SensitiveWordHook] AI 审核通过，放行");
@@ -178,7 +179,28 @@ public class SensitiveWordHook extends AgentHook {
         AssistantMessage blockMessage = new AssistantMessage(reason);
         List<Message> blockMessages = new ArrayList<>();
         blockMessages.add(blockMessage);
-        return Map.of("messages", blockMessages);
+        
+        // 返回包含 messages 和结束标记的响应
+        Map<String, Object> result = new HashMap<>();
+        result.put("messages", blockMessages);
+        result.put("is_finished", true);  // 标记为已完成，阻止 Agent 继续执行
+        return result;
+    }
+
+    /**
+     * 敏感词拦截异常
+     */
+    public static class SensitiveWordBlockedException extends RuntimeException {
+        private final String blockReason;
+
+        public SensitiveWordBlockedException(String reason) {
+            super(reason);
+            this.blockReason = reason;
+        }
+
+        public String getBlockReason() {
+            return blockReason;
+        }
     }
 
     /**
