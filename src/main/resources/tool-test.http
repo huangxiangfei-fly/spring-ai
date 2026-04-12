@@ -1,0 +1,40 @@
+### Tool 函数调用测试
+
+### 1. 基础对话（不使用工具）
+GET http://localhost:8080/ali/qwen/chat?message=你好
+
+### 2. 使用工具 - 天气查询
+GET http://localhost:8080/ali/tool/chat?message=今天北京天气怎么样
+
+### 3. 使用工具 - 时间查询
+GET http://localhost:8080/ali/tool/chat?message=现在几点了
+
+### 4. 使用工具 - 数学计算
+GET http://localhost:8080/ali/tool/chat?message=计算 1234 除以 56 等于多少
+
+### 5. 使用工具 - 平均值计算
+GET http://localhost:8080/ali/tool/chat?message=计算 25, 50, 75, 100 的平均值
+
+### 6. 流式工具调用
+GET http://localhost:8080/ali/tool/chat/stream?message=帮我计算一下 234 * 567
+
+### 7. 指定使用天气工具
+GET http://localhost:8080/ali/tool/chat/specific?message=上海天气如何&tools=weatherTools
+
+### 8. 指定使用计算器工具
+GET http://localhost:8080/ali/tool/chat/specific?message=计算 999 + 111&tools=calculatorTools
+
+### 9. 指定使用时间工具
+GET http://localhost:8080/ali/tool/chat/specific?message=今天是星期几&tools=timeTools
+
+### 10. 测试时间工具
+GET http://localhost:8080/ali/tool/test/time
+
+### 11. 测试计算器工具
+GET http://localhost:8080/ali/tool/test/calculator
+
+### 12. 测试天气工具
+GET http://localhost:8080/ali/tool/test/weather
+
+### 13. 综合测试（所有工具）
+GET http://localhost:8080/ali/tool/test/all
