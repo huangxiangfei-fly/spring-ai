@@ -48,7 +48,7 @@ spring:
   ai:
     dashscope:
       # 你的阿里云 DashScope API Key，这里配置环境变量
-      api-key: ${AI_DASHSCOPE_API_KEY:sk-c287a4b8bebb48afa3bbf2249af848e4}
+      api-key: ${AI_DASHSCOPE_API_KEY:sk-c287a4b8bebb48afa3bbf2249afxxxx}
       chat:
         options:
           model: qwen-plus
