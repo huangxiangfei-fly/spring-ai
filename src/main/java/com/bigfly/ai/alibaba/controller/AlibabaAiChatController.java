@@ -24,6 +24,7 @@ public class AlibabaAiChatController {
      * 简单对话接口
      * GET /ali/qwen/chat?message=你好
      */
+    @SaIgnore
     @GetMapping("/chat")
     public String chat(@RequestParam String message) {
         return chatClient.prompt()

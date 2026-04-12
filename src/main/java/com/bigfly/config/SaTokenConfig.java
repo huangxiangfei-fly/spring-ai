@@ -34,6 +34,6 @@ public class SaTokenConfig implements WebMvcConfigurer {
                         "/**/*.ico"              // ICO图标
                     )
                     .check(r -> StpUtil.checkLogin());  // 登录校验
-        })).addPathPatterns("/**").excludePathPatterns("/ali/*");
+        })).addPathPatterns("/**").excludePathPatterns("/ali/**");
     }
 }
