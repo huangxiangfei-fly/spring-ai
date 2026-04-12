@@ -20,3 +20,13 @@ GET http://localhost:8080/ali/tool/chat/stream?message=帮我计算一下 234 * 
 
 ### 7. 综合测试（所有工具）
 GET http://localhost:8080/ali/tool/test/all
+
+### 8. JSON 格式返回 - 获取用户信息
+GET http://localhost:8080/ali/tool/test/json/user?userId=U001
+
+### 9. JSON 格式返回 - 获取订单信息
+GET http://localhost:8080/ali/tool/test/json/order?orderId=ORD2024001
+
+### 10. JSON 格式返回 - 获取用户列表
+GET http://localhost:8080/ali/tool/test/json/users
+

@@ -84,4 +84,84 @@ public class ToolCallService {
         }
     }
 
+    /**
+     * 指定工具进行对话
+     *
+     * @param message 用户消息
+     * @param toolNames 指定使用的工具名称列表（Bean 名称）
+     * @return AI 回复
+     */
+    public String chatWithSpecificTools(String message, String... toolNames) {
+        log.info("收到指定工具调用请求: {}, 工具: {}", message, toolNames);
+        
+        try {
+            var promptBuilder = chatClient.prompt()
+                    .user(message);
+            
+            // 如果指定了工具名称，则只使用这些工具
+            if (toolNames != null && toolNames.length > 0) {
+                // 根据工具名称查找对应的 BaseTools 实例
+                Object[] selectedTools = baseToolsList.stream()
+                        .filter(tool -> {
+                            // 获取类名（去掉首字母大写）
+                            String className = tool.getClass().getSimpleName();
+                            String beanName = Character.toLowerCase(className.charAt(0)) + className.substring(1);
+                            return java.util.Arrays.asList(toolNames).contains(beanName);
+                        })
+                        .map(BaseTools::getToolInstance)
+                        .toArray();
+                
+                if (selectedTools.length > 0) {
+                    promptBuilder.tools(selectedTools);
+                } else {
+                    log.warn("未找到指定的工具: {}", java.util.Arrays.toString(toolNames));
+                    //  fallback: 使用所有工具
+                    Object[] allTools = baseToolsList.stream()
+                            .map(BaseTools::getToolInstance)
+                            .toArray();
+                    promptBuilder.tools(allTools);
+                }
+            } else {
+                // 使用所有工具
+                Object[] toolObjects = baseToolsList.stream()
+                        .map(BaseTools::getToolInstance)
+                        .toArray();
+                promptBuilder.tools(toolObjects);
+            }
+            
+            String response = promptBuilder.call().content();
+            
+            // 清理 Markdown 代码块标记
+            response = cleanMarkdownJson(response);
+            
+            log.info("指定工具调用完成");
+            return response;
+        } catch (Exception e) {
+            log.error("指定工具调用失败", e);
+            return "抱歉，处理您的请求时出现了错误：" + e.getMessage();
+        }
+    }
+
+    /**
+     * 清理返回内容中的 Markdown JSON 代码块标记
+     * 将 ```json ... ``` 或 ``` ... ``` 转换为纯 JSON
+     *
+     * @param content 原始内容
+     * @return 清理后的内容
+     */
+    private String cleanMarkdownJson(String content) {
+        if (content == null || content.isEmpty()) {
+            return content;
+        }
+        
+        // 移除开头的 ```json 或 ```
+        content = content.replaceAll("^```json\s*", "");
+        content = content.replaceAll("^```\s*", "");
+        
+        // 移除结尾的 ```
+        content = content.replaceAll("\s*```$", "");
+        
+        // 去除首尾空白
+        return content.trim();
+    }
 }
