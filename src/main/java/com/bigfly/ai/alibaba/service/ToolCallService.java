@@ -84,37 +84,4 @@ public class ToolCallService {
         }
     }
 
-    /**
-     * 测试特定工具的调用
-     *
-     * @param message 用户消息
-     * @param toolNames 指定使用的工具名称列表（可选）
-     * @return AI 回复
-     */
-    public String chatWithSpecificTools(String message, String... toolNames) {
-        log.info("收到指定工具调用请求: {}, 工具: {}", message, toolNames);
-        
-        try {
-            var promptBuilder = chatClient.prompt()
-                    .user(message);
-            
-            // 如果指定了工具名称，则只使用这些工具
-            if (toolNames != null && toolNames.length > 0) {
-                promptBuilder.tools(toolNames);
-            } else {
-                // 使用所有工具
-                Object[] toolObjects = baseToolsList.stream()
-                        .map(BaseTools::getToolInstance)
-                        .toArray();
-                promptBuilder.tools(toolObjects);
-            }
-            
-            String response = promptBuilder.call().content();
-            log.info("指定工具调用完成");
-            return response;
-        } catch (Exception e) {
-            log.error("指定工具调用失败", e);
-            return "抱歉，处理您的请求时出现了错误：" + e.getMessage();
-        }
-    }
 }

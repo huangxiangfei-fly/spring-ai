@@ -45,48 +45,7 @@ public class ToolCallController {
         return Flux.just(toolCallService.streamChatWithTools(message));
     }
 
-    /**
-     * 指定工具进行对话
-     * GET /ali/tool/chat/specific?message=计算&tools=calculatorTools
-     * 
-     * 可用工具名称：
-     * - timeTools: 时间相关工具
-     * - calculatorTools: 计算器工具
-     * - weatherTools: 天气查询工具
-     */
-    @GetMapping("/chat/specific")
-    public String chatWithSpecificTools(
-            @RequestParam String message,
-            @RequestParam(required = false) String[] tools) {
-        return toolCallService.chatWithSpecificTools(message, tools);
-    }
 
-    /**
-     * 测试时间工具
-     * GET /ali/tool/test/time
-     */
-    @GetMapping("/test/time")
-    public String testTimeTools() {
-        return toolCallService.chatWithSpecificTools("现在是什么时间？", "timeTools");
-    }
-
-    /**
-     * 测试计算器工具
-     * GET /ali/tool/test/calculator
-     */
-    @GetMapping("/test/calculator")
-    public String testCalculatorTools() {
-        return toolCallService.chatWithSpecificTools("计算 123 + 456 的结果", "calculatorTools");
-    }
-
-    /**
-     * 测试天气工具
-     * GET /ali/tool/test/weather
-     */
-    @GetMapping("/test/weather")
-    public String testWeatherTools() {
-        return toolCallService.chatWithSpecificTools("北京今天的天气怎么样？", "weatherTools");
-    }
 
     /**
      * 综合测试（使用所有工具）
