@@ -67,20 +67,20 @@ langchain4j:
   open-ai:
     chat-model:
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-      api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+      api-key: sk-c287a4b8bebb48afa3bbf2249xxxxx
       model-name: qwen-plus
       log-requests: true #请求消息日志
       log-responses: true #响应消息日志
       image-gen-model:
-        api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+        api-key: sk-c287a4b8bebb48afa3bbf2249xxxxx
         base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
         model-name: wan2.2-t2i-plus
       image-vl-model:
-        api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+        api-key: sk-c287a4b8bebb48afa3bbf2249xxxxx
         base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
         model-name: qwen3-vl-plus
       image-edit-model:
-        api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+        api-key: sk-c287a4b8bebb48afa3bbf2249xxxxx
         base-url: https://dashscope.aliyuncs.com/api/v1
         model-name: qwen-image-edit-plus
 
