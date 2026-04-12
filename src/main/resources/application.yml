@@ -6,7 +6,7 @@ server:
 
 spring:
   application:
-    name: spring-ai-langchain4j
+    name: spring-ai
   main:
     allow-bean-definition-overriding: true
   # 解决SSE流式响应中文乱码
