@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 public class TimeTools extends BaseTools {
 
     @Override
-    protected Object getToolInstance() {
+    public Object getToolInstance() {
         return this;
     }
 

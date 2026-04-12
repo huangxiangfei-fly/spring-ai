@@ -1,9 +1,9 @@
 package com.bigfly.ai.alibaba.service;
 
+import com.bigfly.ai.alibaba.tools.BaseTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +17,11 @@ import java.util.List;
 public class ToolCallService {
 
     private final ChatClient chatClient;
-    private final List<ToolCallbackProvider> toolCallbackProviders;
+    private final List<BaseTools> baseToolsList;
 
-    public ToolCallService(ChatModel chatModel, List<ToolCallbackProvider> toolCallbackProviders) {
+    public ToolCallService(ChatModel chatModel, List<BaseTools> baseToolsList) {
         this.chatClient = ChatClient.builder(chatModel).build();
-        this.toolCallbackProviders = toolCallbackProviders;
+        this.baseToolsList = baseToolsList;
     }
 
     /**
@@ -34,9 +34,14 @@ public class ToolCallService {
         log.info("收到工具调用请求: {}", message);
         
         try {
+            // 将所有 BaseTools 的工具实例传入
+            Object[] toolObjects = baseToolsList.stream()
+                    .map(BaseTools::getToolInstance)
+                    .toArray();
+            
             var prompt = chatClient.prompt()
                     .user(message)
-                    .tools(toolCallbackProviders.toArray(new ToolCallbackProvider[0]));  // 传入所有 Tool
+                    .tools(toolObjects);  // 传入工具对象数组
             
             String response = prompt.call().content();
             
@@ -58,10 +63,14 @@ public class ToolCallService {
         log.info("收到流式工具调用请求: {}", message);
         
         try {
+            Object[] toolObjects = baseToolsList.stream()
+                    .map(BaseTools::getToolInstance)
+                    .toArray();
+            
             StringBuilder result = new StringBuilder();
             chatClient.prompt()
                     .user(message)
-                    .tools(toolCallbackProviders.toArray(new ToolCallbackProvider[0]))
+                    .tools(toolObjects)
                     .stream()
                     .content()
                     .doOnNext(chunk -> result.append(chunk))
@@ -93,7 +102,11 @@ public class ToolCallService {
             if (toolNames != null && toolNames.length > 0) {
                 promptBuilder.tools(toolNames);
             } else {
-                promptBuilder.tools(toolCallbackProviders.toArray(new ToolCallbackProvider[0]));  // 使用所有工具
+                // 使用所有工具
+                Object[] toolObjects = baseToolsList.stream()
+                        .map(BaseTools::getToolInstance)
+                        .toArray();
+                promptBuilder.tools(toolObjects);
             }
             
             String response = promptBuilder.call().content();

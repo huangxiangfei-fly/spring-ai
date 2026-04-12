@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class CalculatorTools extends BaseTools {
 
     @Override
-    protected Object getToolInstance() {
+    public Object getToolInstance() {
         return this;
     }
 

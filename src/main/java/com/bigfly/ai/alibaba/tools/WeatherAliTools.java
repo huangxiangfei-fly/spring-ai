@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 public class WeatherAliTools extends BaseTools {
 
     @Override
-    protected Object getToolInstance() {
+    public Object getToolInstance() {
         return this;
     }
 
