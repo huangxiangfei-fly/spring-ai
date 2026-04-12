@@ -1,14 +1,20 @@
 package com.bigfly.ai.alibaba.service;
 
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
+import com.alibaba.cloud.ai.graph.agent.hook.hip.HumanInTheLoopHook;
+import com.alibaba.cloud.ai.graph.agent.hook.hip.ToolConfig;
+import com.alibaba.cloud.ai.graph.agent.hook.summarization.SummarizationHook;
+import com.alibaba.cloud.ai.graph.checkpoint.savers.redis.RedisSaver;
+import com.bigfly.ai.alibaba.hook.SensitiveWordHook;
 import com.bigfly.ai.alibaba.tools.BaseTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.method.MethodToolCallback;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,42 +33,59 @@ public class ReactAgentService {
     private final ReactAgent reactAgent;
 
     public ReactAgentService(ChatModel chatModel, List<BaseTools> baseToolsList) {
-        // 将 BaseTools 转换为 ToolCallback 数组，过滤掉无效的工具
-        ToolCallback[] toolCallbacks = baseToolsList.stream()
-                .filter(tool -> {
-                    if (tool == null) {
-                        log.warn("发现 null 工具实例，已跳过");
-                        return false;
+        // 将 BaseTools 转换为 ToolCallback 数组
+        List<ToolCallback> allToolCallbacks = new ArrayList<>();
+        
+        for (BaseTools tool : baseToolsList) {
+            if (tool == null || tool.getToolInstance() == null) {
+                log.warn("跳过无效工具: {}", tool != null ? tool.getClass().getName() : "null");
+                continue;
+            }
+            
+            try {
+                Object instance = tool.getToolInstance();
+                // 使用 MethodToolCallbackProvider 自动扫描 @Tool 注解方法
+                MethodToolCallbackProvider provider = MethodToolCallbackProvider.builder()
+                        .toolObjects(instance)
+                        .build();
+                
+                ToolCallback[] callbacks = provider.getToolCallbacks();
+                if (callbacks != null && callbacks.length > 0) {
+                    for (ToolCallback callback : callbacks) {
+                        log.debug("成功加载工具: {}, 工具名: {}", 
+                                tool.getClass().getSimpleName(),
+                                callback.getToolDefinition().name());
                     }
-                    Object instance = tool.getToolInstance();
-                    if (instance == null) {
-                        log.warn("工具 {} 的实例为 null，已跳过", tool.getClass().getName());
-                        return false;
-                    }
-                    return true;
-                })
-                .map(tool -> {
-                    try {
-                        Object instance = tool.getToolInstance();
-                        log.debug("正在创建工具回调: {}, 实例: {}", tool.getClass().getSimpleName(), instance);
-                        return MethodToolCallback.builder()
-                                .toolObject(instance)
-                                .build();
-                    } catch (Exception e) {
-                        log.error("创建工具回调失败: {}, 错误: {}", tool.getClass().getName(), e.getMessage());
-                        return null;
-                    }
-                })
-                .filter(callback -> callback != null)
-                .toArray(ToolCallback[]::new);
+                    allToolCallbacks.addAll(List.of(callbacks));
+                } else {
+                    log.warn("工具 {} 没有生成任何 ToolCallback", tool.getClass().getName());
+                }
+            } catch (Exception e) {
+                log.error("创建工具回调失败: {}", tool.getClass().getName(), e);
+            }
+        }
 
+        ToolCallback[] toolCallbacks = allToolCallbacks.toArray(new ToolCallback[0]);
         log.info("初始化 ReactAgentService，已加载 {} 个工具", toolCallbacks.length);
+        // 创建消息压缩 Hook适用场景：
+        //超出上下文窗口的长期对话；
+        //具有大量历史记录的多轮对话；
+        //需要保留完整对话上下文的应用程序。
+        SummarizationHook summarizationHook = SummarizationHook.builder()
+                .model(chatModel)
+                .maxTokensBeforeSummary(4000)
+                .messagesToKeep(20)
+                .build();
 
-        // 构建官方 ReactAgent
+        // 创建敏感词校验 Hook（传入 ChatModel 做语义审核）
+        SensitiveWordHook sensitiveWordHook = new SensitiveWordHook(chatModel);
+
+        // 构建官方 ReactAgent，注册 Hook
         this.reactAgent = ReactAgent.builder()
                 .name("react-agent")
                 .model(chatModel)
                 .tools(toolCallbacks)
+                .hooks(List.of(sensitiveWordHook,summarizationHook))   // 通过 Hook 机制实现敏感词校验
                 .instruction("""
                         你是一个智能助手。请遵循以下原则：
 
@@ -72,6 +95,8 @@ public class ReactAgentService {
                         """)
                 .enableLogging(true)
                 .build();
+        
+        log.info("ReactAgent 初始化完成，已注册 Hook: [SensitiveWordHook, SummarizationHook]");
     }
 
     /**
