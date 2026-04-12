@@ -52,6 +52,12 @@ spring:
       chat:
         options:
           model: qwen-plus
+      embedding:
+        options:
+          model: text-embedding-v3
+      rerank:
+        options:
+          model: gte-rerank
 #    ollama:
 #      base-url: http://localhost:11434
 #      chat:

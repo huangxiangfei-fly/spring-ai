@@ -1,0 +1,162 @@
+Spring AI Alibaba RAG 使用指南
+
+一、简介
+
+Spring AI Alibaba 是基于 Spring AI 框架的阿里巴巴 AI 解决方案，提供了完整的 RAG（检索增强生成）能力。
+
+二、核心功能
+
+1. 文档管理
+   - 支持文本、文件、资源等多种文档来源
+   - 自动文档分割和向量化
+   - 灵活的元数据管理
+
+2. 向量检索
+   - 基于语义的相似度检索
+   - 可配置的检索参数（topK、相似度阈值等）
+   - 支持过滤条件检索
+
+3. 重排序
+   - 使用 DashScope 重排序模型
+   - 提高检索结果的相关性
+   - 返回相关性分数
+
+4. RAG 查询
+   - 简单检索模式
+   - 带重排序的高级模式
+   - 流式响应支持
+
+三、API 接口说明
+
+1. 文档管理接口
+
+   a) 添加文本文档
+   POST /ali/rag/document/text
+   Body: {
+     "text": "文档内容",
+     "title": "文档标题",
+     "source": "来源标识"
+   }
+
+   b) 上传文件
+   POST /ali/rag/document/file
+   Form-Data: file=文件
+
+   c) 添加资源文档
+   POST /ali/rag/document/resource
+   Body: {
+     "resourcePath": "classpath:documents/example.txt"
+   }
+
+2. RAG 查询接口
+
+   a) 带重排序的查询（推荐）
+   GET /ali/rag/query?query=你的问题
+   
+   响应示例:
+   {
+     "code": 200,
+     "data": {
+       "query": "什么是 RAG?",
+       "answer": "RAG 是检索增强生成技术...",
+       "relatedDocuments": [
+         {
+           "content": "文档内容...",
+           "relevanceScore": 0.95,
+           "rank": 0,
+           "title": "RAG 介绍",
+           "source": "sample:rag-intro"
+         }
+       ],
+       "processingTimeMs": 1234
+     }
+   }
+
+   b) 简单查询（不带重排序）
+   GET /ali/rag/query/simple?query=你的问题
+
+   c) 流式查询
+   GET /ali/rag/query/stream?query=你的问题
+
+3. 其他接口
+
+   a) 初始化示例文档
+   GET /ali/rag/init/sample
+
+   b) 获取统计信息
+   GET /ali/rag/stats
+
+四、使用流程
+
+1. 初始化文档库
+   调用 /ali/rag/init/sample 添加示例文档
+
+2. 执行查询
+   调用 /ali/rag/query?query=你的问题
+
+3. 查看结果
+   返回包含答案和相关文档的完整响应
+
+五、配置说明
+
+在 application.yml 中配置：
+
+spring:
+  ai:
+    dashscope:
+      api-key: ${AI_DASHSCOPE_API_KEY}
+      chat:
+        options:
+          model: qwen-plus
+
+六、技术架构
+
+1. 嵌入模型：DashScope Embedding
+   - 将文本转换为向量表示
+   - 支持中文和英文
+
+2. 向量存储：SimpleVectorStore
+   - 内存存储（开发环境）
+   - 生产环境建议切换到 Redis/Milvus
+
+3. 重排序模型：DashScope Rerank
+   - 对检索结果进行相关性排序
+   - 提高最终回答质量
+
+4. 聊天模型：Qwen Plus
+   - 基于检索到的上下文生成回答
+   - 支持流式输出
+
+七、最佳实践
+
+1. 文档分割策略
+   - 根据文档类型选择合适的分割大小
+   - 保持语义完整性
+   - 适当的重叠避免信息丢失
+
+2. 检索参数调优
+   - topK：初始检索数量（建议 5-10）
+   - similarityThreshold：相似度阈值（建议 0.5-0.7）
+   - rerank topN：重排序后返回数量（建议 3-5）
+
+3. 提示词优化
+   - 清晰定义助手角色
+   - 明确回答规则
+   - 提供足够的上下文信息
+
+八、常见问题
+
+1. 检索结果为空
+   - 检查文档是否已成功向量化
+   - 调整相似度阈值
+   - 增加 topK 值
+
+2. 回答质量不高
+   - 检查检索到的相关文档质量
+   - 优化提示词模板
+   - 启用重排序功能
+
+3. 性能优化
+   - 使用缓存减少重复计算
+   - 异步处理文档向量化
+   - 选择合适的向量数据库
