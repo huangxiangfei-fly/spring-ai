@@ -5,6 +5,7 @@ import com.alibaba.cloud.ai.graph.agent.hook.hip.HumanInTheLoopHook;
 import com.alibaba.cloud.ai.graph.agent.hook.hip.ToolConfig;
 import com.alibaba.cloud.ai.graph.agent.hook.summarization.SummarizationHook;
 import com.alibaba.cloud.ai.graph.checkpoint.savers.redis.RedisSaver;
+import com.bigfly.ai.alibaba.hook.RAGMessagesHook;
 import com.bigfly.ai.alibaba.hook.SensitiveWordHook;
 import com.bigfly.ai.alibaba.hook.SensitiveWordHook.SensitiveWordBlockedException;
 import com.bigfly.ai.alibaba.tools.BaseTools;
@@ -13,6 +14,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,29 +33,32 @@ import java.util.List;
 @Service
 public class ReactAgentService {
 
+    private final VectorStore vectorStore;
+
     private final ReactAgent reactAgent;
 
-    public ReactAgentService(ChatModel chatModel, List<BaseTools> baseToolsList) {
+    public ReactAgentService(ChatModel chatModel, List<BaseTools> baseToolsList, VectorStore vectorStore) {
+        this.vectorStore = vectorStore;
         // 将 BaseTools 转换为 ToolCallback 数组
         List<ToolCallback> allToolCallbacks = new ArrayList<>();
-        
+
         for (BaseTools tool : baseToolsList) {
             if (tool == null || tool.getToolInstance() == null) {
                 log.warn("跳过无效工具: {}", tool != null ? tool.getClass().getName() : "null");
                 continue;
             }
-            
+
             try {
                 Object instance = tool.getToolInstance();
                 // 使用 MethodToolCallbackProvider 自动扫描 @Tool 注解方法
                 MethodToolCallbackProvider provider = MethodToolCallbackProvider.builder()
                         .toolObjects(instance)
                         .build();
-                
+
                 ToolCallback[] callbacks = provider.getToolCallbacks();
                 if (callbacks != null && callbacks.length > 0) {
                     for (ToolCallback callback : callbacks) {
-                        log.debug("成功加载工具: {}, 工具名: {}", 
+                        log.debug("成功加载工具: {}, 工具名: {}",
                                 tool.getClass().getSimpleName(),
                                 callback.getToolDefinition().name());
                     }
@@ -81,22 +86,25 @@ public class ReactAgentService {
         // 创建敏感词校验 Hook（传入 ChatModel 做语义审核）
         SensitiveWordHook sensitiveWordHook = new SensitiveWordHook(chatModel);
 
+        //RAG
+        RAGMessagesHook ragMessagesHook = new RAGMessagesHook(vectorStore);
+
         // 构建官方 ReactAgent，注册 Hook
         this.reactAgent = ReactAgent.builder()
                 .name("react-agent")
                 .model(chatModel)
                 .tools(toolCallbacks)
-                .hooks(List.of(sensitiveWordHook,summarizationHook))   // 通过 Hook 机制实现敏感词校验
+                .hooks(List.of(sensitiveWordHook, summarizationHook, ragMessagesHook))   // 通过 Hook 机制实现敏感词校验
                 .instruction("""
                         你是一个智能助手。请遵循以下原则：
-
+                        
                         1. 当用户问题需要实时数据（天气、时间、计算等）时，主动调用对应工具获取真实数据
                         2. 根据工具返回的真实结果回答问题，不要编造数据
                         3. 如果已有足够信息直接回答即可
                         """)
                 .enableLogging(true)
                 .build();
-        
+
         log.info("ReactAgent 初始化完成，已注册 Hook: [SensitiveWordHook, SummarizationHook]");
     }
 
