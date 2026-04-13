@@ -26,6 +26,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
                     .notMatch(
                         "/static/**",            // 静态资源
                         "/index.html",           // 首页
+                        "/chatui/index.html",           // 首页
                         "/index-ali.html",       // 阿里首页
                         "/**/*.css",             // CSS文件
                         "/**/*.js",              // JS文件
