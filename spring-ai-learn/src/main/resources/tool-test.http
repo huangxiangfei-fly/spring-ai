@@ -1,0 +1,43 @@
+### Tool 函数调用测试
+
+### 1. 基础对话（不使用工具）
+GET http://localhost:8080/ali/qwen/chat?message=你好
+
+### 2. 使用工具 - 天气查询
+GET http://localhost:8080/ali/tool/chat?message=今天北京天气怎么样
+
+### 3. 使用工具 - 时间查询
+GET http://localhost:8080/ali/tool/chat?message=现在几点了
+
+### 4. 使用工具 - 数学计算
+GET http://localhost:8080/ali/tool/chat?message=计算 1234 除以 56 等于多少
+
+### 5. 使用工具 - 平均值计算
+GET http://localhost:8080/ali/tool/chat?message=计算 25, 50, 75, 100 的平均值
+
+### 6. 流式工具调用
+GET http://localhost:8080/ali/tool/chat/stream?message=帮我计算一下 234 * 567
+
+### 7. 综合测试（所有工具）
+GET http://localhost:8080/ali/tool/test/all
+
+### 8. JSON 格式返回 - 获取用户信息
+GET http://localhost:8080/ali/tool/test/json/user?userId=U001
+
+### 9. JSON 格式返回 - 获取订单信息
+GET http://localhost:8080/ali/tool/test/json/order?orderId=ORD2024001
+
+### 10. JSON 格式返回 - 获取用户列表
+GET http://localhost:8080/ali/tool/test/json/users
+
+
+### 11.  * ReAct 模式测试 - 思考执行观察循环
+          
+GET http://localhost:8080/ali/tool/react?question=北京今天天气怎么样？现在几点了？计算 100 除以 2 的结果是多少？
+
+### 12.  reactAgent 模式测试 - 思考执行观察循环
+GET http://localhost:8080/ali/tool/reactAgent?question=北京今天天气怎么样？现在几点了？计算 100 除以 2 的结果是多少？
+
+### 13.   人工干预
+GET http://localhost:8080/ali/tool/humanLoop?question=帮我写一首关于梅花的诗
+

@@ -1,0 +1,139 @@
+server:
+  port: 8080
+  tomcat:
+    # 禁用响应缓冲，确保 SSE 流式输出
+    max-swallow-size: -1
+
+spring:
+  application:
+    name: spring-ai
+  main:
+    allow-bean-definition-overriding: true
+  # 解决SSE流式响应中文乱码
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  # MySQL 数据源配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/spring-ai?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root@123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+
+
+
+  ai:
+    dashscope:
+      # 你的阿里云 DashScope API Key，这里配置环境变量
+      api-key: ${AI_DASHSCOPE_API_KEY:sk-c287a4b8bebb48afa3bbf2249af848e4}
+      chat:
+        options:
+          model: qwen-plus
+      embedding:
+        options:
+          model: text-embedding-v3
+      rerank:
+        options:
+          model: gte-rerank
+#    ollama:
+#      base-url: http://localhost:11434
+#      chat:
+#        model: qwen3.5:35b
+
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+      model-name: qwen-plus
+      log-requests: true #请求消息日志
+      log-responses: true #响应消息日志
+      image-gen-model:
+        api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+        base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+        model-name: wan2.2-t2i-plus
+      image-vl-model:
+        api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+        base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+        model-name: qwen3-vl-plus
+      image-edit-model:
+        api-key: sk-c287a4b8bebb48afa3bbf2249af848e4
+        base-url: https://dashscope.aliyuncs.com/api/v1
+        model-name: qwen-image-edit-plus
+
+# 日志级别
+logging:
+  level:
+    root: INFO
+    dev.langchain4j: DEBUG #日志级别
+    com.alibaba.cloud.ai: DEBUG
+    org.springframework.ai: DEBUG
+    org:
+      springframework:
+          ai:
+            chat:
+              client:
+                advisor:
+                  SimpleLoggerAdvisor: DEBUG
+
+
+
+weather:
+  tools:
+    url: https://cn.apihz.cn/api/tianqi/tqyb.php?id=%s&key=%s&sheng=%s&place=%s
+    id:  10014930
+    key: 7ee41f7ef245c9111f5869ac8d0c8b96
+
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.bigfly.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Sa-Token 配置
+sa-token:
+  # token 名称 (同时也是 cookie 名称)
+  token-name: satoken
+  # token 有效期（单位：秒）默认30天，-1 代表永久有效
+  timeout: 3600
+  # token 最低活跃频率（单位：秒），如果 token 超过此时间没有访问系统就会被冻结，默认-1 代表不限制，永不冻结
+  active-timeout: -1
+  # 是否允许同一账号多地同时登录 （为 true 时允许一起登录, 为 false 时新登录挤掉旧登录）
+  is-concurrent: true
+  # 在多人登录同一账号时，是否共用一个 token （为 true 时所有登录共用一个 token, 为 false 时每次登录新建一个 token）
+  is-share: true
+  # token 风格（默认可取值：uuid、simple-uuid、random-32、random-64、random-128、tik）
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: false

@@ -1,0 +1,102 @@
+### Spring AI Alibaba RAG API 测试
+
+### 1. 初始化示例文档
+GET http://localhost:8080/ali/rag/init/sample
+Accept: application/json
+
+###
+
+### 2. 添加文本文档
+POST http://localhost:8080/ali/rag/document/text
+Content-Type: application/json
+
+{
+  "text": "Java 是一种广泛使用的面向对象编程语言，具有平台无关性、安全性、健壮性等特点。Java 由 Sun Microsystems 公司于 1995 年发布，现由 Oracle 公司维护。Java 的主要特点包括：简单性、面向对象、分布式、解释型、健壮性、安全性、可移植性、高性能、多线程和动态性。",
+  "title": "Java 编程语言介绍",
+  "source": "sample:java-intro"
+}
+
+###
+
+### 3. RAG 查询（带重排序 - 推荐）
+GET http://localhost:8080/ali/rag/query?query=什么是RAG技术
+Accept: application/json
+
+###
+
+### 4. RAG 查询 - 询问 Spring AI
+GET http://localhost:8080/ali/rag/query?query=Spring AI有哪些主要特性
+Accept: application/json
+
+###
+
+### 5. RAG 查询 - 询问通义千问
+GET http://localhost:8080/ali/rag/query?query=通义千问有什么特点
+Accept: application/json
+
+###
+
+### 6. RAG 查询（简单检索 - 不带重排序）
+GET http://localhost:8080/ali/rag/query/simple?query=Java的特点是什么
+Accept: application/json
+
+###
+
+### 7. RAG 流式查询
+GET http://localhost:8080/ali/rag/query/stream?query=RAG的工作流程是怎样的
+Accept: text/plain
+
+###
+
+### 8. 获取向量库统计信息
+GET http://localhost:8080/ali/rag/stats
+Accept: application/json
+
+###
+
+### 9. 从资源文件添加文档
+POST http://localhost:8080/ali/rag/document/resource
+Content-Type: application/json
+
+{
+  "resourcePath": "documents/rag-guide.txt"
+}
+
+###
+
+### 10. 上传文件到向量库（需要先准备一个测试文件）
+# POST http://localhost:8080/ali/rag/document/file
+# Content-Type: multipart/form-data; boundary=WebAppBoundary
+# 
+# --WebAppBoundary
+# Content-Disposition: form-data; name="file"; filename="test.txt"
+# Content-Type: text/plain
+# 
+# 这是测试文件的内容
+# --WebAppBoundary--
+
+###
+
+### 11. 复杂查询测试 - 比较不同模型
+GET http://localhost:8080/ali/rag/query?query=Spring AI和LangChain4j有什么区别
+Accept: application/json
+
+###
+
+### 12. 查询 Java 相关信息
+GET http://localhost:8080/ali/rag/query?query=Java语言的主要优势
+Accept: application/json
+
+###
+
+### 13. 查询 RAG 应用场景
+GET http://localhost:8080/ali/rag/query?query=RAG技术可以应用在哪些场景
+Accept: application/json
+
+###
+
+### 14. 查询通义千问的模型版本
+GET http://localhost:8080/ali/rag/query?query=通义千问有哪些不同的模型版本
+Accept: application/json
+
+###

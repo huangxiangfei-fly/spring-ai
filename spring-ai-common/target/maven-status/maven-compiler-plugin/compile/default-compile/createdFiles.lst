@@ -1,0 +1,10 @@
+com\bigfly\config\CharsetFilter.class
+com\bigfly\common\BigFlyException.class
+com\bigfly\config\WebMvcConfig.class
+com\bigfly\common\GlobalExceptionHandler.class
+com\bigfly\config\RedisConfig.class
+com\bigfly\common\I18nUtils.class
+com\bigfly\config\I18nConfig.class
+com\bigfly\common\ErrorCode.class
+com\bigfly\common\Result.class
+com\bigfly\config\SaTokenConfig.class
