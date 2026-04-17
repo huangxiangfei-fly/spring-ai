@@ -77,35 +77,18 @@ public class HumanInTheLoopService {
                     System.out.println("描述: " + feedback.getDescription());
                 }
 
-                // 6. 模拟人工决策（这里选择批准）
+                // 6. 模拟人工决策（这里选择拒绝）
                 InterruptionMetadata.Builder feedbackBuilder = InterruptionMetadata.builder()
                         .nodeId(interruptionMetadata.node())
                         .state(interruptionMetadata.state());
 
                 toolFeedbacks.forEach(toolFeedback -> {
-                    InterruptionMetadata.ToolFeedback approvedFeedback =
+                    InterruptionMetadata.ToolFeedback rejectedFeedback =
                             InterruptionMetadata.ToolFeedback.builder(toolFeedback)
-                                    .result(InterruptionMetadata.ToolFeedback.FeedbackResult.REJECTED)
+                                    .result(InterruptionMetadata.ToolFeedback.FeedbackResult.APPROVED)
                                     .build();
-                    feedbackBuilder.addToolFeedback(approvedFeedback);
+                    feedbackBuilder.addToolFeedback(rejectedFeedback);
                 });
-
-                InterruptionMetadata approvalMetadata = feedbackBuilder.build();
-
-                // 7. 第二次调用 - 使用人工反馈恢复执行
-                System.out.println("=== 第二次调用：使用批准决策恢复 ===");
-                RunnableConfig resumeConfig = RunnableConfig.builder()
-                        .threadId(threadId)
-                        .addMetadata(RunnableConfig.HUMAN_FEEDBACK_METADATA_KEY, approvalMetadata)
-                        .build();
-
-                Optional<NodeOutput> finalResult = agent.invokeAndGetOutput("", resumeConfig);
-
-                if (finalResult.isPresent()) {
-                    System.out.println("执行完成");
-                    System.out.println("最终结果: " + finalResult.get());
-                    return finalResult.get().toString();
-                }
             } else {
                 System.out.println("未检测到中断，直接返回结果");
                 if (result.isPresent()) {
