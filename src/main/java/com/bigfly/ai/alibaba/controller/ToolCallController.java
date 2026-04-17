@@ -1,6 +1,7 @@
 package com.bigfly.ai.alibaba.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
+import com.bigfly.ai.alibaba.service.HumanInTheLoopService;
 import com.bigfly.ai.alibaba.service.ReActService;
 import com.bigfly.ai.alibaba.service.ReactAgentService;
 import com.bigfly.ai.alibaba.service.ToolCallService;
@@ -20,17 +21,19 @@ public class ToolCallController {
     private final ToolCallService toolCallService;
     private final ReActService reActService;
     private final ReactAgentService reactAgentService;
+    private final HumanInTheLoopService humanInTheLoopService;
 
-    public ToolCallController(ToolCallService toolCallService, ReActService reActService, ReactAgentService reactAgentService) {
+    public ToolCallController(ToolCallService toolCallService, ReActService reActService, ReactAgentService reactAgentService, HumanInTheLoopService humanInTheLoopService) {
         this.toolCallService = toolCallService;
         this.reActService = reActService;
         this.reactAgentService = reactAgentService;
+        this.humanInTheLoopService = humanInTheLoopService;
     }
 
     /**
      * 使用工具进行对话（自动选择工具）
      * GET /ali/tool/chat?message=今天北京天气怎么样
-     * 
+     *
      * 示例问题：
      * - 今天北京天气怎么样？
      * - 1234 除以 56 等于多少？
@@ -52,7 +55,6 @@ public class ToolCallController {
     }
 
 
-
     /**
      * 综合测试（使用所有工具）
      * GET /ali/tool/test/all
@@ -69,7 +71,7 @@ public class ToolCallController {
     @GetMapping("/test/json/user")
     public String testJsonUser(@RequestParam(defaultValue = "U001") String userId) {
         return toolCallService.chatWithSpecificTools(
-                String.format("请获取用户 %s 的详细信息，并以 JSON 格式返回", userId), 
+                String.format("请获取用户 %s 的详细信息，并以 JSON 格式返回", userId),
                 new String[]{"jsonResponseTool"}  // Bean 名称：类名首字母小写
         );
     }
@@ -81,7 +83,7 @@ public class ToolCallController {
     @GetMapping("/test/json/order")
     public String testJsonOrder(@RequestParam(defaultValue = "ORD2024001") String orderId) {
         return toolCallService.chatWithSpecificTools(
-                String.format("请获取订单 %s 的详细信息，并以 JSON 格式返回", orderId), 
+                String.format("请获取订单 %s 的详细信息，并以 JSON 格式返回", orderId),
                 new String[]{"jsonResponseTool"}
         );
     }
@@ -93,7 +95,7 @@ public class ToolCallController {
     @GetMapping("/test/json/users")
     public String testJsonUsers() {
         return toolCallService.chatWithSpecificTools(
-                "请获取所有用户的列表信息，并以 JSON 数组格式返回", 
+                "请获取所有用户的列表信息，并以 JSON 数组格式返回",
                 new String[]{"jsonResponseTool"}
         );
     }
@@ -101,13 +103,13 @@ public class ToolCallController {
     /**
      * ReAct 模式测试 - 思考执行观察循环
      * GET /ali/tool/react?question=北京今天天气怎么样？
-     * 
+     *
      * ReAct 模式会让 AI 进行多轮思考-执行-观察：
      * 1. Thought: 分析问题，决定下一步做什么
      * 2. Action: 调用工具获取信息
      * 3. Observation: 查看工具返回的结果
      * 4. 重复以上步骤直到得出最终答案
-     * 
+     *
      * 示例问题：
      * - 北京今天天气怎么样？（会调用天气工具）
      * - 现在几点了？（会调用时间工具）
@@ -117,8 +119,20 @@ public class ToolCallController {
     public String react(@RequestParam String question) {
         return reActService.react(question);
     }
+
     @GetMapping("/reactAgent")
     public String reactAgent(@RequestParam String question) {
         return reactAgentService.react(question);
+    }
+
+
+    /**
+     * 测试人工干预
+     * @param question
+     * @return
+     */
+    @GetMapping("/humanLoop")
+    public String humanLoop(@RequestParam String question) {
+        return humanInTheLoopService.humanLoop(question);
     }
 }

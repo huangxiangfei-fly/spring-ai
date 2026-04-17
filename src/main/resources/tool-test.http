@@ -48,3 +48,18 @@ GET http://localhost:8080/ali/tool/test/json/users
              */
 GET http://localhost:8080/ali/tool/react?question=北京今天天气怎么样？现在几点了？计算 100 除以 2 的结果是多少？
 
+### 12.     /**
+             * reactAgent 模式测试 - 思考执行观察循环
+             *
+             * 示例问题：
+             * - 北京今天天气怎么样？（会调用天气工具）
+             * - 现在几点了？（会调用时间工具）
+             * - 计算 100 除以 3 的结果是多少？（会调用计算器工具）
+             */
+GET http://localhost:8080/ali/tool/reactAgent?question=北京今天天气怎么样？现在几点了？计算 100 除以 2 的结果是多少？
+
+### 13.     /**
+             * 人工干预
+             */
+GET http://localhost:8080/ali/tool/humanLoop?question=帮我写一首关于梅花的诗
+
