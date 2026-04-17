@@ -51,6 +51,7 @@
 
 详细接口请参考 `src/main/resources/*.http` 文件。
 
+## 公众号：淹死的虾
 ---
 
 **Made with ❤️ by BigFly AI Team**
