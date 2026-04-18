@@ -1,0 +1,63 @@
+package com.bigfly.ai.alibaba.service;
+
+import io.agentscope.core.ReActAgent;
+import io.agentscope.core.message.Msg;
+import io.agentscope.core.model.DashScopeChatModel;
+import io.agentscope.core.model.ExecutionConfig;
+import io.agentscope.core.tool.Toolkit;
+import io.agentscope.core.tool.Tool;
+import io.agentscope.core.tool.ToolParam;
+
+import java.time.Duration;
+
+public class AgentScopeQuickStart {
+    public static void main(String[] args) {
+        // 准备工具
+        Toolkit toolkit = new Toolkit();
+        toolkit.registerTool(new SimpleTools());
+
+        //超时与重试
+        ExecutionConfig modelConfig = ExecutionConfig.builder()
+                .timeout(Duration.ofMinutes(2))
+                .maxAttempts(3)
+                .build();
+
+        ExecutionConfig toolConfig = ExecutionConfig.builder()
+                .timeout(Duration.ofSeconds(30))
+                .maxAttempts(1)  // 工具通常不重试
+                .build();
+
+        // 创建智能体
+        ReActAgent jarvis = ReActAgent.builder()
+                .name("Jarvis")
+                .sysPrompt("你是一个名为 Jarvis 的助手")
+                .model(DashScopeChatModel.builder()
+                        .apiKey("sk-c287a4b8bebb48afa3bbf2xxxxx")
+                        .modelName("qwen-plus")
+                        .build())
+                .toolkit(toolkit)
+                .modelExecutionConfig(modelConfig)
+                .toolExecutionConfig(toolConfig)
+                .maxIters(10)              // 最大迭代次数（默认 10）
+                .checkRunning(true)        // 阻止并发调用（默认 true）
+                .build();
+
+        // 发送消息
+        Msg msg = Msg.builder()
+                .textContent("你好！Jarvis，现在几点了？")
+                .build();
+
+        Msg response = jarvis.call(msg).block();
+        System.out.println(response.getTextContent());
+    }
+}
+
+// 工具类
+class SimpleTools {
+    @Tool(name = "get_time", description = "获取当前时间")
+    public String getTime(
+            @ToolParam(name = "zone", description = "时区，例如：北京") String zone) {
+        return java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+}

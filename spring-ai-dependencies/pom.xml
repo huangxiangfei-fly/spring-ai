@@ -29,9 +29,15 @@
         <!-- ==================== 权限认证版本 ==================== -->
         <sa-token.version>1.45.0</sa-token.version>
 
+
+        <!-- ==================== 权限认证版本 ==================== -->
+        <agentscope.version>1.0.11</agentscope.version>
         <!-- ==================== 工具库版本 ==================== -->
         <jsonschema-generator.version>4.37.0</jsonschema-generator.version>
         <mapdb.version>3.0.9</mapdb.version>
+        
+        <!-- ==================== Jackson 版本 ==================== -->
+        <jackson.version>2.18.2</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -100,6 +106,13 @@
                 <artifactId>jsonschema-generator</artifactId>
                 <version>${jsonschema-generator.version}</version>
             </dependency>
+            <!-- ==================== agentscope ==================== -->
+            <dependency>
+                <groupId>io.agentscope</groupId>
+                <artifactId>agentscope-spring-boot-starter</artifactId>
+                <version>${agentscope.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.github.victools</groupId>
                 <artifactId>jsonschema-module-jackson</artifactId>
@@ -109,6 +122,24 @@
                 <groupId>org.mapdb</groupId>
                 <artifactId>mapdb</artifactId>
                 <version>${mapdb.version}</version>
+            </dependency>
+
+            <!-- ==================== Jackson 3.x 支持 ==================== -->
+            <!-- Agentscope 需要 Jackson 3.x annotations -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
