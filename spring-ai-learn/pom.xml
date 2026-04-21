@@ -162,6 +162,12 @@
             <artifactId>jsonschema-module-jackson</artifactId>
         </dependency>
 
+        <!-- Alibaba DashScope SDK 文生图 不低于2.22.2  文生视频不低于2.22.6 -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>dashscope-sdk-java</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.agentscope</groupId>
             <artifactId>agentscope-spring-boot-starter</artifactId>

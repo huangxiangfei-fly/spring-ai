@@ -38,6 +38,10 @@
         
         <!-- ==================== Jackson 版本 ==================== -->
         <jackson.version>2.18.2</jackson.version>
+
+
+        <!--Alibaba DashScope SDK 文生图 不低于2.22.2  文生视频不低于2.22.6 -->
+       <dashscope-sdk-java.version>2.22.6</dashscope-sdk-java.version>
     </properties>
 
     <dependencyManagement>
@@ -140,6 +144,12 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+            <!-- Alibaba DashScope SDK 文生图 不低于2.22.2  文生视频不低于2.22.6 -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>dashscope-sdk-java</artifactId>
+                <version>${dashscope-sdk-java.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
